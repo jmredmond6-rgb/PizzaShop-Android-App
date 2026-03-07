@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">PizzaShop</string>
+
+    <string name="menu_title">Pizza Menu</string>
+    <string name="menu_subtitle">Browse pizzas</string>
+
+    <string name="cart_title">Your Cart</string>
+    <string name="cart_subtitle">Review items</string>
+
+    <string name="history_title">Order History</string>
+    <string name="history_subtitle">Past orders</string>
+
+    <string name="details_subtitle">Order details</string>
+
+    <string name="login_title">Welcome to PizzaShop</string>
+    <string name="login_subtitle">Sign in to continue</string>
+
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Start ordering</string>
+</resources>
