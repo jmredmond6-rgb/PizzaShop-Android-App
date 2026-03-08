@@ -42,13 +42,19 @@ Core data models include `Customer`, `Pizza`, `CartItem`, `Order`, and `OrderIte
 
 ## Screenshots
 
-Planned screenshots:
+## Screenshots
 
-- Login screen
-- Pizza menu
-- Cart
-- Order history
-- Order details
+| Login | Account Creation |
+|------|------|
+| ![Login](screenshots/login.png) | ![Account](screenshots/account_creation.png) |
+
+| Menu | Cart |
+|------|------|
+| ![Menu](screenshots/menu.png) | ![Cart](screenshots/cart.png) |
+
+| Order History | Order Details |
+|------|------|
+| ![History](screenshots/order_history.png) | ![Details](screenshots/order_details.png) |
 
 ## Running the Project
 
