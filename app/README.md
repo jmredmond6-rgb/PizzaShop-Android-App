@@ -40,7 +40,7 @@ This project began as a software engineering capstone and was later refined into
 
 Screenshots will be added once the UI is finalized.
 
-## Potential Future Improvements
+## Potential Fut Improvements
 
 - Additional UI polish
 - Improved menu filtering
