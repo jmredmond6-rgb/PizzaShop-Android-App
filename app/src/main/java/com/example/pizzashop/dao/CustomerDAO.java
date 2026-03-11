@@ -18,4 +18,7 @@ public interface CustomerDAO {
 
     @Query("SELECT * FROM customers WHERE id = :id LIMIT 1")
     Customer findById(long id);
+
+    @Query("UPDATE customers SET password = :hashedPassword WHERE id = :customerId")
+    void updatePassword(long customerId, String hashedPassword);
 }

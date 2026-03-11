@@ -1,5 +1,7 @@
 # Gradle
 .gradle/
+.gradle-local/
+.android-local/
 build/
 
 # Local configuration (sdk path, etc)

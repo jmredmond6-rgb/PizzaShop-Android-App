@@ -5,6 +5,7 @@ PizzaShop is an Android mobile ordering application built in Java using Android 
 ## Features
 
 - User login and account creation
+- Salted PBKDF2 password hashing for local sign-in
 - Browse available pizzas
 - Search pizzas by name or ingredient
 - Add items to cart
@@ -21,7 +22,6 @@ PizzaShop is an Android mobile ordering application built in Java using Android 
 - DAO architecture
 - RecyclerView
 - View Binding
-- Firebase (used for APK distribution in the original school project)
 
 ## Architecture
 
@@ -38,11 +38,11 @@ This project began as a software engineering capstone and was later refined into
 
 ## Screenshots
 
-Screenshots will be added once the UI is finalized.
+Screenshots are available in the repository root `screenshots/` folder and the main project README.
 
-## Potential Fut Improvements
+## Potential Future Improvements
 
-- Additional UI polish
-- Improved menu filtering
-- Expanded order history details
-- Profile/account settings
+- Move database work off the main thread for a more production-style data layer
+- Add account/profile management
+- Expand automated UI coverage for end-to-end flows
+- Add a small backend or sync layer if the project ever grows beyond local storage

@@ -77,7 +77,7 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
         StringBuilder sb = new StringBuilder();
         if (row.items != null) {
             for (OrderItem oi : row.items) {
-                sb.append("• ")
+                sb.append("- ")
                         .append(oi.quantity)
                         .append(" x ")
                         .append(oi.pizzaNameSnapshot)
@@ -104,3 +104,4 @@ public class OrderHistoryAdapter extends RecyclerView.Adapter<OrderHistoryAdapte
         return rows == null ? 0 : rows.size();
     }
 }
+

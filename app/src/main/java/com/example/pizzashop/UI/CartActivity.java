@@ -70,7 +70,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
                 String summary = "Order #" + orderId
                         + " placed successfully.\n\n"
                         + currentItemCount + (currentItemCount == 1 ? " item" : " items")
-                        + " • " + MoneyUtil.dollars(currentTotal)
+                        + " - " + MoneyUtil.dollars(currentTotal)
                         + "\nSaved to order history.";
                 new AlertDialog.Builder(this)
                         .setTitle("Thanks for your order")
@@ -148,3 +148,4 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         return true;
     }
 }
+

@@ -11,9 +11,11 @@ import com.example.pizzashop.entities.Customer;
 import com.example.pizzashop.entities.Order;
 import com.example.pizzashop.entities.OrderItem;
 import com.example.pizzashop.entities.Pizza;
+import com.example.pizzashop.security.PasswordSecurity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /* Used to access the customer, pizza, cart, and order data for the application. */
 public class PizzaShopRepository {
@@ -24,32 +26,63 @@ public class PizzaShopRepository {
     private final OrderDAO orderDao;
 
     public PizzaShopRepository(Context context) {
-        ShopDatabase db = ShopDatabase.getInstance(context);
+        this(ShopDatabase.getInstance(context));
+    }
+
+    public PizzaShopRepository(ShopDatabase db) {
         customerDao = db.customerDAO();
         pizzaDao = db.pizzaDAO();
         cartDao = db.cartDAO();
         orderDao = db.orderDAO();
     }
 
-
     public long register(String name, String email, String password) throws IllegalArgumentException {
-        if (customerDao.findByEmail(email) != null) {
+        String normalizedEmail = normalizeEmail(email);
+        String trimmedName = name == null ? "" : name.trim();
+
+        if (trimmedName.isEmpty()) {
+            throw new IllegalArgumentException("Name is required.");
+        }
+        if (normalizedEmail.isEmpty()) {
+            throw new IllegalArgumentException("Email is required.");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password is required.");
+        }
+        if (customerDao.findByEmail(normalizedEmail) != null) {
             throw new IllegalArgumentException("Email is already registered.");
         }
-        Customer c = new Customer(name, email, password);
-        return customerDao.insert(c);
+
+        Customer customer = new Customer(trimmedName, normalizedEmail, PasswordSecurity.hashPassword(password));
+        return customerDao.insert(customer);
     }
 
     public Customer login(String email, String password) {
-        Customer c = customerDao.findByEmail(email);
-        if (c == null) return null;
-        return password.equals(c.password) ? c : null;
+        if (password == null || password.isEmpty()) {
+            return null;
+        }
+
+        Customer customer = customerDao.findByEmail(normalizeEmail(email));
+        if (customer == null || customer.password == null) {
+            return null;
+        }
+
+        if (!PasswordSecurity.verifyPassword(password, customer.password)) {
+            return null;
+        }
+
+        if (!PasswordSecurity.isHashed(customer.password)) {
+            String upgradedHash = PasswordSecurity.hashPassword(password);
+            customerDao.updatePassword(customer.id, upgradedHash);
+            customer.password = upgradedHash;
+        }
+
+        return customer;
     }
 
     public Customer getCustomer(long id) {
         return customerDao.findById(id);
     }
-
 
     public List<Pizza> getActivePizzas() {
         return pizzaDao.getActivePizzas();
@@ -58,7 +91,6 @@ public class PizzaShopRepository {
     public Pizza getPizza(long pizzaId) {
         return pizzaDao.getById(pizzaId);
     }
-
 
     public void addToCart(long customerId, long pizzaId) {
         cartDao.addOrIncrement(customerId, pizzaId);
@@ -80,8 +112,6 @@ public class PizzaShopRepository {
         cartDao.clearCart(customerId);
     }
 
-
-
     /* Creates an Order + OrderItems from the current cart. Then returns the new orderId, or -1 if cart is empty. */
     public long checkout(long customerId) {
         List<CartItem> cart = cartDao.getCartItems(customerId);
@@ -96,7 +126,6 @@ public class PizzaShopRepository {
 
             total += (p.priceDollars * ci.quantity);
 
-
             items.add(new OrderItem(
                     0,
                     p.id,
@@ -105,7 +134,6 @@ public class PizzaShopRepository {
                     ci.quantity
             ));
         }
-
 
         total = Math.round(total * 100.0) / 100.0;
 
@@ -121,24 +149,20 @@ public class PizzaShopRepository {
         return orderId;
     }
 
-
     public List<Order> getOrders(long customerId) {
         return orderDao.getOrdersForCustomer(customerId);
     }
+
     public Order getOrderById(long orderId) {
         return orderDao.getOrderById(orderId);
     }
-
 
     public List<OrderItem> getOrderItems(long orderId) {
         return orderDao.getItemsForOrder(orderId);
     }
 
-
-
-    /*  Adds items from a previous order back into the cart.  */
+    /* Adds items from a previous order back into the cart. */
     public int reorderFromOrder(long customerId, long orderId) {
-
         List<OrderItem> items = orderDao.getItemsForOrder(orderId);
         if (items == null || items.isEmpty()) return 0;
 
@@ -147,20 +171,19 @@ public class PizzaShopRepository {
         for (OrderItem oi : items) {
             Pizza p = pizzaDao.getById(oi.pizzaId);
 
-            // Skip items that no longer exist or were disabled
+            // Skip items that no longer exist or were disabled.
             if (p == null || !p.active) continue;
 
             for (int i = 0; i < oi.quantity; i++) {
                 cartDao.addOrIncrement(customerId, oi.pizzaId);
             }
             addedLines++;
-
         }
 
         return addedLines;
     }
 
-
-
-
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.US);
+    }
 }

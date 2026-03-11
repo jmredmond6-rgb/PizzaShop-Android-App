@@ -1,7 +1,11 @@
 package com.example.pizzashop;
 
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
@@ -10,8 +14,10 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.pizzashop.dao.CustomerDAO;
+import com.example.pizzashop.database.PizzaShopRepository;
 import com.example.pizzashop.database.ShopDatabase;
 import com.example.pizzashop.entities.Customer;
+import com.example.pizzashop.security.PasswordSecurity;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,6 +28,7 @@ import org.junit.runner.RunWith;
 public class LoginTest {
     private ShopDatabase db;
     private CustomerDAO customerDAO;
+    private PizzaShopRepository repo;
 
     @Before
     public void setUp() {
@@ -30,6 +37,7 @@ public class LoginTest {
                 .allowMainThreadQueries()
                 .build();
         customerDAO = db.customerDAO();
+        repo = new PizzaShopRepository(db);
     }
 
     @After
@@ -38,51 +46,61 @@ public class LoginTest {
     }
 
     @Test
-    public void findByEmail_returnsCustomer_whenExists() {
-        Customer c = new Customer("Jake", "jake@test.com", "JMR123");
-        customerDAO.insert(c);
+    public void register_storesHashedPasswordAndNormalizedEmail() {
+        long customerId = repo.register("Jake", "  Jake@Test.com  ", "JMR123");
 
-        Customer found = customerDAO.findByEmail("jake@test.com");
+        Customer found = customerDAO.findById(customerId);
 
         assertNotNull(found);
         assertEquals("jake@test.com", found.email);
+        assertNotEquals("JMR123", found.password);
+        assertTrue(PasswordSecurity.isHashed(found.password));
     }
 
     @Test
-    public void findByEmail_returnsNull_whenMissing() {
-        assertNull(customerDAO.findByEmail("missing@test.com"));
+    public void register_rejectsDuplicateEmailIgnoringCase() {
+        repo.register("Jake", "jake@test.com", "JMR123");
+
+        try {
+            repo.register("Jake 2", "JAKE@test.com", "another123");
+        } catch (IllegalArgumentException ex) {
+            assertEquals("Email is already registered.", ex.getMessage());
+            return;
+        }
+
+        assertTrue("Expected duplicate email registration to fail", false);
     }
 
-
     @Test
-    public void loginRule_returnsTrue_whenPasswordMatches() {
-        customerDAO.insert(new Customer("Jake", "jake@test.com", "JMR123"));
+    public void login_returnsCustomer_whenPasswordMatchesHashedCredential() {
+        long customerId = repo.register("Jake", "jake@test.com", "JMR123");
 
-        Customer found = customerDAO.findByEmail("jake@test.com");
+        Customer found = repo.login("JAKE@test.com", "JMR123");
+
         assertNotNull(found);
-
-        boolean loginOk = "JMR123".equals(found.password);
-        assertTrue(loginOk);
+        assertEquals(customerId, found.id);
     }
 
     @Test
-    public void loginRule_returnsFalse_whenPasswordWrong() {
-        customerDAO.insert(new Customer("Jake", "jake@test.com", "JMR123"));
+    public void login_returnsNull_whenPasswordWrong() {
+        repo.register("Jake", "jake@test.com", "JMR123");
 
-        Customer found = customerDAO.findByEmail("jake@test.com");
-        assertNotNull(found);
+        Customer found = repo.login("jake@test.com", "WRONG");
 
-        boolean loginOk = "WRONG".equals(found.password);
-        assertFalse(loginOk);
-    }
-
-    @Test
-    public void loginRule_returnsFalse_whenEmailMissing() {
-        Customer found = customerDAO.findByEmail("missing@test.com");
         assertNull(found);
+    }
 
+    @Test
+    public void login_upgradesLegacyPlaintextPasswordAfterSuccessfulLogin() {
+        Customer legacy = new Customer("Jake", "jake@test.com", "JMR123");
+        long customerId = customerDAO.insert(legacy);
 
-        boolean loginOk = (found != null) && "anything".equals(found.password);
-        assertFalse(loginOk);
+        Customer loggedIn = repo.login("jake@test.com", "JMR123");
+        Customer updated = customerDAO.findById(customerId);
+
+        assertNotNull(loggedIn);
+        assertNotNull(updated);
+        assertTrue(PasswordSecurity.isHashed(updated.password));
+        assertFalse("JMR123".equals(updated.password));
     }
 }
